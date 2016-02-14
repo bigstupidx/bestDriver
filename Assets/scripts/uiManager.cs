@@ -6,6 +6,7 @@ using System;
 using System.IO;
 using System.Net;
 using SimpleJSON;
+using System.Collections.Generic;
 
 
 public class uiManager : MonoBehaviour {
@@ -127,7 +128,7 @@ public class uiManager : MonoBehaviour {
     void retrieveScore()
     {
         Debug.Log("retrieveScore");
-        var request = (HttpWebRequest)WebRequest.Create(new Uri("http://default-environment-5zhficjk2s.elasticbeanstalk.com/users/limit/10"));
+        var request = (HttpWebRequest)WebRequest.Create(new Uri("http://bestdriver-moraes001.rhcloud.com/users/limit/10"));
         request.ContentType = "application/json";
         request.Method = "GET";
 
@@ -170,18 +171,39 @@ public class uiManager : MonoBehaviour {
        
     }
 
+    public string Md5Sum(string strToEncrypt)
+    {
+        System.Text.UTF8Encoding ue = new System.Text.UTF8Encoding();
+        byte[] bytes = ue.GetBytes(strToEncrypt);
+
+        // encrypt bytes
+        System.Security.Cryptography.MD5CryptoServiceProvider md5 = new System.Security.Cryptography.MD5CryptoServiceProvider();
+        byte[] hashBytes = md5.ComputeHash(bytes);
+
+        // Convert the encrypted bytes back to a string (base 16)
+        string hashString = "";
+
+        for (int i = 0; i < hashBytes.Length; i++)
+        {
+            hashString += System.Convert.ToString(hashBytes[i], 16).PadLeft(2, '0');
+        }
+        Debug.Log(hashString.PadLeft(32, '0'));
+        return hashString.PadLeft(32, '0');
+    }
+
     public void saveScore()
     {
 
         Debug.Log("saving");
-        var url = "http://default-environment-5zhficjk2s.elasticbeanstalk.com/user";
+        var url = "http://bestdriver-moraes001.rhcloud.com/user";
         var form = new WWWForm();
-        form.AddField("name", recordName.text);
-        //string
+        Dictionary<string, string> headers = form.headers;
+        var hashValue = Md5Sum(recordName.text + score);
+        headers.Add("hashvalue", hashValue);
+       form.AddField("name", recordName.text);
         form.AddField("score", score);
-        form.AddField("ip", GetIP());
-
-        var www = new WWW(url, form);
+        byte[] rawData = form.data;
+        var www = new WWW(url, rawData, headers);
 
 
         // wait for request to complete
@@ -189,21 +211,5 @@ public class uiManager : MonoBehaviour {
         recordName.text = "";
         panelRecord.SetActive(false);
     }
-
-
-    private string GetIP()
-    {
-        string strHostName = "";
-        strHostName = System.Net.Dns.GetHostName();
-
-        IPHostEntry ipEntry = System.Net.Dns.GetHostEntry(strHostName);
-
-        IPAddress[] addr = ipEntry.AddressList;
-
-        return addr[addr.Length - 1].ToString();
-
-    }
-
-
 
 }
