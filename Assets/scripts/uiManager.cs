@@ -7,6 +7,8 @@ using System.IO;
 using System.Net;
 using SimpleJSON;
 using System.Collections.Generic;
+using UnityEngine.Advertisements;
+using UnityEngine.Analytics;
 
 
 public class uiManager : MonoBehaviour {
@@ -23,6 +25,15 @@ public class uiManager : MonoBehaviour {
     public Button pauseButton;
     public audioManager am;
     public GameObject panelRecord;
+    Config config;
+    public GameObject[] flags;
+    private bool pontuating = true;
+
+
+    public void setPontuating(bool value)
+    {
+        pontuating = value;
+    }
 
     public void closePanel()
     {
@@ -35,7 +46,7 @@ public class uiManager : MonoBehaviour {
     void Start () {
         score = 0;
         gameOver = false;
-   
+        config = new Config();
         InvokeRepeating("scoreUpdate", 1.0f, 0.5f);
        
 
@@ -49,7 +60,7 @@ public class uiManager : MonoBehaviour {
 
     void scoreUpdate()
     {
-        if (!gameOver)
+        if (!gameOver && pontuating)
         {
             score++;
         }
@@ -74,6 +85,19 @@ public class uiManager : MonoBehaviour {
 
     public void gameOverActivated()
     {
+        int totalPotions = 5;
+        int totalCoins = 100;
+        string weaponID = "Weapon_102";
+        Analytics.CustomEvent("gameOver", new Dictionary<string, object>
+          {
+            { "potions", totalPotions },
+            { "coins", totalCoins },
+            { "activeWeapon", weaponID }
+          });
+        if (Advertisement.IsReady())
+        {
+            Advertisement.Show();
+        }
         gameOver = true;
         panelRecord.SetActive(true);
         pauseButton.gameObject.SetActive(false);
@@ -86,6 +110,13 @@ public class uiManager : MonoBehaviour {
         Time.timeScale = 1;
         SceneManager.LoadScene(1);
     }
+
+    public void Instructions()
+    {
+        Time.timeScale = 1;
+        SceneManager.LoadScene(2);
+    }
+
 
 
     public void Pause() {
@@ -146,8 +177,9 @@ public class uiManager : MonoBehaviour {
             scores.text = "";
             foreach (JSONNode item in jsonResult.AsArray)
             {
-                names.text += item["name"] + "\n";
+                names.text += item["country_code"] + " - " + item["name"] + "\n";
                 scores.text += item["score"] + "\n";
+                //Instantiate(flags[Random.Range(0, 5)], carPos, transform.rotation);
             }
         }
 
@@ -198,7 +230,7 @@ public class uiManager : MonoBehaviour {
         var url = "http://bestdriver-moraes001.rhcloud.com/user";
         var form = new WWWForm();
         Dictionary<string, string> headers = form.headers;
-        var hashValue = Md5Sum(recordName.text + score);
+        var hashValue = Md5Sum(recordName.text + score + config.getKey());
         headers.Add("hashvalue", hashValue);
        form.AddField("name", recordName.text);
         form.AddField("score", score);

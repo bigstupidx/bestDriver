@@ -5,6 +5,7 @@ public class carController : MonoBehaviour {
 
     public float carSpeed;
     public float maxPos = 2.5f;
+    public float maxPosPont = 2.10f;
     Vector3 position;
     public uiManager ui;
 
@@ -52,7 +53,13 @@ public class carController : MonoBehaviour {
         }
         position = transform.position;
         position.x = Mathf.Clamp(position.x, -maxPos, maxPos);
-
+        bool value = true;
+        if (position.x > maxPosPont || position.x < -maxPosPont)
+        {
+            value = false;
+        }
+        
+        ui.setPontuating(value);
         transform.position = position;
     }
     

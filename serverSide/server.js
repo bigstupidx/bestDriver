@@ -12,6 +12,8 @@ var port = process.env.OPENSHIFT_NODEJS_PORT || 3000,
     http = require('http'),
     fs = require('fs'),
     html = fs.readFileSync('index.html');
+var config = require('./config.js');
+var c = new config();
 
 var log = function(entry) {
     fs.appendFileSync('bestDriver.log', new Date().toISOString() + ' - ' + entry + '\n');
@@ -37,7 +39,7 @@ bestDrive.get('/users/limit/:limit', function(req, res) {
 });
 
 bestDrive.delete('/user/delete/:id', function(req, res) {
-	if(crypto.createHash('md5').update(req.body.name+req.body.score).digest("hex") == hashValue){
+	if(crypto.createHash('md5').update(req.body.name+req.body.score+c.getKey()).digest("hex") == hashValue){
 		var options = {
 			"idranking": parseInt(req.params.id)
 		};
@@ -47,7 +49,7 @@ bestDrive.delete('/user/delete/:id', function(req, res) {
 
 bestDrive.delete('/users/delete/all', function(req, res) {
 	var hashValue = req.headers["hashvalue"];
-	if(crypto.createHash('md5').update(req.body.name+req.body.score).digest("hex") == hashValue){
+	if(crypto.createHash('md5').update(req.body.name+req.body.score+c.getKey()).digest("hex") == hashValue){
 		var options = {};
 		mydb.deleteRecord(options, res);
 	}
@@ -71,7 +73,7 @@ bestDrive.post('/user', function(req, res) {
 	}
 	var ipAddr = req.headers["x-forwarded-for"];
 	var hashValue = req.headers["hashvalue"];
-	if(crypto.createHash('md5').update(req.body.name+req.body.score).digest("hex") == hashValue){
+	if(crypto.createHash('md5').update(req.body.name+req.body.score+c.getKey()).digest("hex") == hashValue){
 		request('http://freegeoip.net/json/' + ipAddr, function (error, response, body) {
 			if (!error && response.statusCode == 200) {
 					var obj = JSON.parse(body);
