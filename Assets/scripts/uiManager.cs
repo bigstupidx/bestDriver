@@ -8,240 +8,292 @@ using System.Net;
 using SimpleJSON;
 using System.Collections.Generic;
 using UnityEngine.Advertisements;
-using UnityEngine.Analytics;
+
+public class uiManager : MonoBehaviour
+{
+  
+  public Text scoreText;
+  public int score;
+  public bool gameOver;
+  public Button[] buttons;
+  public carSpawner carSpawer;
+  public GameObject panel;
+  public Text names;
+  public Text scores;
+  public InputField recordName;
+  public Button pauseButton;
+  public audioManager am;
+  public GameObject panelRecord;
+  Config config;
+  public GameObject[] flags;
+  private bool pontuating = true;
+  public Button soundOn;
+  public Button soundoff;
+  public Button marginRight;
+  public Button marginLeft;
+  public GameObject main;
+  private const string AD_UNITY_ID = "ca-app-pub-3127012185949555/2849453421";
+  private AdMobPlugin admob;
 
 
-public class uiManager : MonoBehaviour {
-
-    public Text scoreText;
-    public int score;
-    public bool gameOver;
-    public Button[] buttons;
-    public carSpawner carSpawer;
-    public GameObject panel;
-    public Text names;
-    public Text scores;
-    public InputField recordName;
-    public Button pauseButton;
-    public audioManager am;
-    public GameObject panelRecord;
-    Config config;
-    public GameObject[] flags;
-    private bool pontuating = true;
+  public void setPontuating(bool value)
+  {
+    pontuating = value;
+  }
 
 
-    public void setPontuating(bool value)
+  public void closePanel()
+  {
+    panel.SetActive(false);
+    openMenu();
+  }
+
+  public void stopSoud()
+  {
+    PlayerPrefs.SetInt("sound", -1);
+    setSoud();
+  }
+
+  public void startSoud()
+  {
+    PlayerPrefs.SetInt("sound", 1);
+    setSoud();
+  }
+
+  void setSoud()
+  {
+    int sound = PlayerPrefs.GetInt("sound");
+    if(sound >=0 )
     {
-        pontuating = value;
+      soundOn.gameObject.SetActive(false);
+      soundoff.gameObject.SetActive(true);
+      am.carSound.Play();
     }
-
-    public void closePanel()
+    else
     {
-        panel.SetActive(false);
-        openMenu();
+      soundOn.gameObject.SetActive(true);
+      soundoff.gameObject.SetActive(false);
+      am.carSound.Stop();
     }
+  }
 
 
-    // Use this for initialization
-    void Start () {
-        score = 0;
-        gameOver = false;
-        config = new Config();
-        InvokeRepeating("scoreUpdate", 1.0f, 0.5f);
-       
-
-    }
-	
-	// Update is called once per frame
-	void Update () {
-        if(scoreText != null)
-        scoreText.text = "Score: " + score;
-    }
-
-    void scoreUpdate()
+  // Use this for initialization
+  void Start()
+  {
+    if (main != null)
     {
-        if (!gameOver && pontuating)
-        {
-            score++;
-        }
+      admob = GetComponent<AdMobPlugin>();
+      admob.CreateBanner(AD_UNITY_ID, AdMobPlugin.AdSize.SMART_BANNER, true);
+      admob.RequestAd();
+      admob.HideBanner();
+
+
+      Sprite sc = Resources.Load<Sprite>("Sprites/" + PlayerPrefs.GetString("sprite"));
+      SpriteRenderer sr = main.GetComponent<SpriteRenderer>();
+      sr.sprite = sc;
+      score = 0;
+      gameOver = false;
+      config = new Config();
+      InvokeRepeating("scoreUpdate", 1.0f, 0.5f);
+      setSoud();
+
     }
 
-    void openMenu()
+
+  }
+
+  // Update is called once per frame
+  void Update()
+  {
+    if (scoreText != null)
+      scoreText.text = "Score: " + score;
+  }
+
+  void scoreUpdate()
+  {
+    if (!gameOver && pontuating)
     {
-        foreach (Button button in buttons)
-        {
-            button.gameObject.SetActive(true);
-        }
+      score++;
     }
+  }
 
-    void closeMenu()
+  void openMenu()
+  {
+    foreach (Button button in buttons)
     {
-        foreach (Button button in buttons)
-        {
-            button.gameObject.SetActive(false);
-        }
+      button.gameObject.SetActive(true);
     }
+  }
 
-
-    public void gameOverActivated()
+  void closeMenu()
+  {
+    foreach (Button button in buttons)
     {
-        int totalPotions = 5;
-        int totalCoins = 100;
-        string weaponID = "Weapon_102";
-        Analytics.CustomEvent("gameOver", new Dictionary<string, object>
-          {
-            { "potions", totalPotions },
-            { "coins", totalCoins },
-            { "activeWeapon", weaponID }
-          });
-        if (Advertisement.IsReady())
-        {
-            Advertisement.Show();
-        }
-        gameOver = true;
-        panelRecord.SetActive(true);
-        pauseButton.gameObject.SetActive(false);
-        panel.SetActive(true);
-        retrieveScore();
+      button.gameObject.SetActive(false);
     }
+  }
 
-    public void Play()
+  IEnumerator ShowAdWhenReady()
+  {
+    while (!Advertisement.IsReady())
+      yield return null;
+
+    Advertisement.Show();
+  }
+
+
+  public void gameOverActivated()
+  {
+    gameOver = true;
+    panelRecord.SetActive(true);
+    pauseButton.gameObject.SetActive(false);
+    panel.SetActive(true);
+    soundOn.enabled = false;
+    soundoff.enabled = false;
+    retrieveScore();
+    admob.ShowBanner();
+   
+  }
+
+  public void Play()
+  {
+    Time.timeScale = 1;
+    SceneManager.LoadScene(3);
+  }
+
+  public void Instructions()
+  {
+    Time.timeScale = 1;
+    SceneManager.LoadScene(2);
+  }
+
+
+
+  public void Pause()
+  {
+    if (Time.timeScale == 1)
     {
-        Time.timeScale = 1;
-        SceneManager.LoadScene(1);
+      am.carSound.Stop();
+      openMenu();
+      Time.timeScale = 0;
     }
-
-    public void Instructions()
+    else if (Time.timeScale == 0)
     {
-        Time.timeScale = 1;
-        SceneManager.LoadScene(2);
+      setSoud();
+      closeMenu();
+      Time.timeScale = 1;
     }
+  }
 
 
+  public void Exit()
+  {
+    admob.HideBanner();
+    Application.Quit();
+  }
 
-    public void Pause() {
-        if(Time.timeScale ==1)
-        {
-            am.carSound.Stop();
-            openMenu();
-            Time.timeScale = 0;
-        }else if (Time.timeScale == 0)
-        {
-            am.carSound.Play();
-            closeMenu();
-            Time.timeScale = 1;
-        }
-    }
-
-
-    public void Exit()
+  public void Replay()
+  {
+    admob.HideBanner();
+    SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    Time.timeScale = 1;
+    foreach (Button button in buttons)
     {
-        Application.Quit();
+      button.gameObject.SetActive(false);
     }
+    panel.SetActive(false);
+    pauseButton.gameObject.SetActive(true);
+    setSoud();
+  }
 
-    public void Replay()
+  public void Menu()
+  {
+    admob.HideBanner();
+    SceneManager.LoadScene(0);
+  }
+
+  void retrieveScore()
+  {
+    var request = (HttpWebRequest)WebRequest.Create(new Uri("http://bestdriver-moraes001.rhcloud.com/users/limit/10"));
+    request.ContentType = "application/json";
+    request.Method = "GET";
+
+    HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+    string jsonResponse = string.Empty;
+    using (StreamReader sr = new StreamReader(response.GetResponseStream()))
     {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-        Time.timeScale = 1;
-        foreach (Button button in buttons)
-        {
-            button.gameObject.SetActive(false);
-        }
-        panel.SetActive(false);
-        pauseButton.gameObject.SetActive(true);
+      jsonResponse = sr.ReadToEnd();
     }
-
-    public void Menu()
+    var jsonResult = JSON.Parse(jsonResponse);
+    if (jsonResult.Count != 0)
     {
-        SceneManager.LoadScene(0);
+      names.text = "";
+      scores.text = "";
+      foreach (JSONNode item in jsonResult.AsArray)
+      {
+        names.text += item["country_code"] + " - " + item["name"] + "\n";
+        scores.text += item["score"] + "\n";
+      }
     }
+  }
 
-    void retrieveScore()
+
+
+  IEnumerator save(WWW www)
+  {
+    yield return www;
+    // and check for errors
+    if (www.error == null)
     {
-        Debug.Log("retrieveScore");
-        var request = (HttpWebRequest)WebRequest.Create(new Uri("http://bestdriver-moraes001.rhcloud.com/users/limit/10"));
-        request.ContentType = "application/json";
-        request.Method = "GET";
-
-        HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-        string jsonResponse = string.Empty;
-        using (StreamReader sr = new StreamReader(response.GetResponseStream()))
-        {
-            jsonResponse = sr.ReadToEnd();
-        }
-        var jsonResult = JSON.Parse(jsonResponse);
-
-        if (jsonResult.Count != 0)
-        {
-            names.text = "";
-            scores.text = "";
-            foreach (JSONNode item in jsonResult.AsArray)
-            {
-                names.text += item["country_code"] + " - " + item["name"] + "\n";
-                scores.text += item["score"] + "\n";
-                //Instantiate(flags[Random.Range(0, 5)], carPos, transform.rotation);
-            }
-        }
-
+      retrieveScore();
+    }
+    else {
 
     }
 
 
+  }
 
-    IEnumerator save(WWW www)
+  public string Md5Sum(string strToEncrypt)
+  {
+    System.Text.UTF8Encoding ue = new System.Text.UTF8Encoding();
+    byte[] bytes = ue.GetBytes(strToEncrypt);
+
+    // encrypt bytes
+    System.Security.Cryptography.MD5CryptoServiceProvider md5 = new System.Security.Cryptography.MD5CryptoServiceProvider();
+    byte[] hashBytes = md5.ComputeHash(bytes);
+
+    // Convert the encrypted bytes back to a string (base 16)
+    string hashString = "";
+
+    for (int i = 0; i < hashBytes.Length; i++)
     {
-        yield return www;
-        // and check for errors
-        if (www.error == null)
-        {
-            retrieveScore();
-        }
-        else { 
-            Debug.Log("WWW Error: " + www.error);
-        }
-
-       
+      hashString += System.Convert.ToString(hashBytes[i], 16).PadLeft(2, '0');
     }
+    return hashString.PadLeft(32, '0');
+  }
 
-    public string Md5Sum(string strToEncrypt)
-    {
-        System.Text.UTF8Encoding ue = new System.Text.UTF8Encoding();
-        byte[] bytes = ue.GetBytes(strToEncrypt);
+  public void saveScore()
+  {
+    Advertisement.Initialize("103061", true);
+    StartCoroutine(ShowAdWhenReady());
 
-        // encrypt bytes
-        System.Security.Cryptography.MD5CryptoServiceProvider md5 = new System.Security.Cryptography.MD5CryptoServiceProvider();
-        byte[] hashBytes = md5.ComputeHash(bytes);
-
-        // Convert the encrypted bytes back to a string (base 16)
-        string hashString = "";
-
-        for (int i = 0; i < hashBytes.Length; i++)
-        {
-            hashString += System.Convert.ToString(hashBytes[i], 16).PadLeft(2, '0');
-        }
-        Debug.Log(hashString.PadLeft(32, '0'));
-        return hashString.PadLeft(32, '0');
-    }
-
-    public void saveScore()
-    {
-
-        Debug.Log("saving");
-        var url = "http://bestdriver-moraes001.rhcloud.com/user";
-        var form = new WWWForm();
-        Dictionary<string, string> headers = form.headers;
-        var hashValue = Md5Sum(recordName.text + score + config.getKey());
-        headers.Add("hashvalue", hashValue);
-       form.AddField("name", recordName.text);
-        form.AddField("score", score);
-        byte[] rawData = form.data;
-        var www = new WWW(url, rawData, headers);
+    var url = "http://bestdriver-moraes001.rhcloud.com/user";
+    var form = new WWWForm();
+    Dictionary<string, string> headers = form.headers;
+    var hashValue = Md5Sum(recordName.text + score + config.getKey());
+    headers.Add("hashvalue", hashValue);
+    form.AddField("name", recordName.text);
+    form.AddField("score", score);
+    byte[] rawData = form.data;
+    var www = new WWW(url, rawData, headers);
 
 
-        // wait for request to complete
-        StartCoroutine(save(www));
-        recordName.text = "";
-        panelRecord.SetActive(false);
-    }
+    // wait for request to complete
+    StartCoroutine(save(www));
+    recordName.text = "";
+    panelRecord.SetActive(false);
+  }
 
 }
