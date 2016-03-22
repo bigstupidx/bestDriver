@@ -6,7 +6,6 @@ public class carController : MonoBehaviour
 
   public float carSpeed;
   public float maxPos = 2.5f;
-  public float maxPosPont = 2.10f;
   Vector3 position;
   public uiManager ui;
 

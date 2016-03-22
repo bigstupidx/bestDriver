@@ -1,13 +1,12 @@
 ﻿using UnityEngine;
-using System.Collections;
-using UnityEngine.UI;
 
 public class carSpawner : MonoBehaviour
 {
 
   public GameObject[] cars;
-  public float maxPos = 2.5f;
-  public float delayTimer = 0.7f;
+  float minPos = -2.53f;
+  float maxPos = -0.1f;
+  float delayTimer = 0.7f;
   public uiManager ui;
 
   int breakDelay = 8;
@@ -39,7 +38,7 @@ public class carSpawner : MonoBehaviour
 
       if (timer <= 0)
       {
-        Vector3 carPos = new Vector3(Random.Range(-maxPos, maxPos), transform.position.y, transform.position.z);
+        Vector3 carPos = new Vector3(Random.Range(minPos, maxPos), transform.position.y, transform.position.z);
         Instantiate(cars[Random.Range(0, cars.Length)], carPos, transform.rotation);
 
         timer = delayTimer;

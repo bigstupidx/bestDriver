@@ -7,7 +7,6 @@ using System.IO;
 using System.Net;
 using SimpleJSON;
 using System.Collections.Generic;
-using UnityEngine.Advertisements;
 
 public class uiManager : MonoBehaviour
 {
@@ -39,6 +38,16 @@ public class uiManager : MonoBehaviour
   public void setPontuating(bool value)
   {
     pontuating = value;
+  }
+
+  public void goToRecords()
+  {
+    SceneManager.LoadScene(4);
+  }
+
+  public void goToContact()
+  {
+    SceneManager.LoadScene(5);
   }
 
 
@@ -81,33 +90,23 @@ public class uiManager : MonoBehaviour
   // Use this for initialization
   void Start()
   {
+   
+    admob = GetComponent<AdMobPlugin>();
+    admob.CreateBanner(AD_UNITY_ID, AdMobPlugin.AdSize.SMART_BANNER, false);
+    admob.RequestAd();
+    admob.ShowBanner();
     if (main != null)
     {
-      admob = GetComponent<AdMobPlugin>();
-      admob.CreateBanner(AD_UNITY_ID, AdMobPlugin.AdSize.SMART_BANNER, true);
-      admob.RequestAd();
-      admob.HideBanner();
-
-
       Sprite sc = Resources.Load<Sprite>("Sprites/" + PlayerPrefs.GetString("sprite"));
       SpriteRenderer sr = main.GetComponent<SpriteRenderer>();
       sr.sprite = sc;
       score = 0;
       gameOver = false;
       config = new Config();
-      InvokeRepeating("scoreUpdate", 1.0f, 0.5f);
+      InvokeRepeating("scoreUpdate", 0.5f, 0.5f);
       setSoud();
 
     }
-
-
-  }
-
-  // Update is called once per frame
-  void Update()
-  {
-    if (scoreText != null)
-      scoreText.text = "Score: " + score;
   }
 
   void scoreUpdate()
@@ -115,6 +114,7 @@ public class uiManager : MonoBehaviour
     if (!gameOver && pontuating)
     {
       score++;
+      scoreText.text = "Score: " + score;
     }
   }
 
@@ -134,13 +134,6 @@ public class uiManager : MonoBehaviour
     }
   }
 
-  IEnumerator ShowAdWhenReady()
-  {
-    while (!Advertisement.IsReady())
-      yield return null;
-
-    Advertisement.Show();
-  }
 
 
   public void gameOverActivated()
@@ -189,7 +182,10 @@ public class uiManager : MonoBehaviour
 
   public void Exit()
   {
-    admob.HideBanner();
+    if (admob != null)
+    {
+      admob.HideBanner();
+    }
     Application.Quit();
   }
 
@@ -209,7 +205,10 @@ public class uiManager : MonoBehaviour
 
   public void Menu()
   {
-    admob.HideBanner();
+    if (admob != null)
+    {
+      admob.HideBanner();
+    }
     SceneManager.LoadScene(0);
   }
 
@@ -276,8 +275,6 @@ public class uiManager : MonoBehaviour
 
   public void saveScore()
   {
-    Advertisement.Initialize("103061", true);
-    StartCoroutine(ShowAdWhenReady());
 
     var url = "http://bestdriver-moraes001.rhcloud.com/user";
     var form = new WWWForm();
