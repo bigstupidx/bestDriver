@@ -83,6 +83,7 @@
   <ItemGroup>
     <Compile Include="Assets\NewBehaviourScript.cs" />
     <Compile Include="Assets\scripts\Config.cs" />
+    <Compile Include="Assets\scripts\GUIComponents.cs" />
     <Compile Include="Assets\scripts\Menu.cs" />
     <Compile Include="Assets\scripts\SimpleJason.cs" />
     <Compile Include="Assets\scripts\audioManager.cs" />
@@ -94,6 +95,7 @@
     <Compile Include="Assets\scripts\carSpawnerSameWay.cs" />
     <Compile Include="Assets\scripts\enemyCarMove.cs" />
     <Compile Include="Assets\scripts\enemyDestroyer.cs" />
+    <Compile Include="Assets\scripts\mono_gmail.cs" />
     <Compile Include="Assets\scripts\trackMove.cs" />
     <Compile Include="Assets\scripts\uiContact.cs" />
     <Compile Include="Assets\scripts\uiManager.cs" />
